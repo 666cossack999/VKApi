@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using VKApi.VK;
@@ -33,21 +34,21 @@ namespace VKApi
             HttpResponseMessage response = await client.GetAsync($@"https://api.vk.com/method/{method}?group_ids={txtId.Text}&access_token={ACCESS_TOKEN}&v={vkVersion}");
             var content = await response.Content.ReadAsStringAsync();
 
-            var group = JsonSerializer.Deserialize<VKResponse<VKGroup>>(content);
-            txtResponse.Text = group.ToString();
+            
+            txtResponse.Text = myGroup;
         }
 
         public string PrettyJson(string unPrettyJson)
         {
-            var options = new JsonSerializerOptions()
+            var options = new JsonSerializerOptions
             {
-                WriteIndented = true,
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic),
+                WriteIndented = true
             };
 
-            var jsonElement = JsonSerializer.Deserialize<JsonElement>(unPrettyJson);
+            var group = Newtonsoft.Json.JsonConvert.DeserializeObject<VKGroup.Response<VKGroup>>(unPrettyJson, options);
+            return group.response[0].ToString();
 
-            return JsonSerializer.Serialize(jsonElement, options);
         }
 
         private void txtId_TextChanged(object sender, EventArgs e)
